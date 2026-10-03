@@ -18,13 +18,13 @@
         <div class="bg-gradient-to-r from-orange-600 to-amber-600 p-4 sm:p-6 text-white flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
                 <h1 class="text-xl sm:text-2xl font-extrabold tracking-wide uppercase text-center sm:text-left">BLS SPORT PENGELUARAN BARANG</h1>
-                <p class="text-orange-100 text-xs sm:text-sm mt-1 text-center sm:text-left">Terhubung ke Google Sheets (Tarif Rp 1.300 / Paket)</p>
+                <p class="text-orange-100 text-xs sm:text-sm mt-1 text-center sm:text-left">Data Sinkron Otomatis dari Google Sheets</p>
             </div>
             <div class="flex items-center gap-2 flex-wrap justify-center">
-                <button onclick="saveToSheets()" id="btnSave" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1">
+                <button onclick="saveToSheetsWithAuth()" id="btnSave" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1">
                     💾 Simpan ke Sheets
                 </button>
-                <button onclick="resetData()" class="bg-red-500 hover:bg-red-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition shadow">
+                <button onclick="resetDataWithAuth()" class="bg-red-500 hover:bg-red-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition shadow">
                     🔄 Reset Data
                 </button>
             </div>
@@ -116,8 +116,10 @@
     </div>
 
     <script>
-        // URL Google Apps Script Anda sudah terpasang di sini:
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXTqVoEnlNORy0xE3ObMFdKTWdv8IZ5qKY-iAEgd1gPDhzzF8r6q6tTocW1ZoulRGA/exec";
+        
+        // GANTI PIN INI SESUAI KEINGINAN ANDA (Hanya Anda yang tahu PIN ini untuk menyimpan/reset data)
+        const ADMIN_PIN = "1234";
 
         const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
         const sizes = ['M', 'L', 'JUMBO', 'TRAINING'];
@@ -125,9 +127,7 @@
         function initTables() {
             const shopeeBody = document.getElementById('shopeeTableBody');
             const tiktokBody = document.getElementById('tiktokTableBody');
-
-            let shopeeHTML = '';
-            let tiktokHTML = '';
+            let shopeeHTML = '', tiktokHTML = '';
 
             days.forEach((day, dayIndex) => {
                 sizes.forEach((size, sizeIndex) => {
@@ -136,52 +136,24 @@
                     
                     // Shopee
                     shopeeHTML += `<tr class="${rowBg} border-b border-gray-200 text-center">`;
-                    if (sizeIndex === 0) {
-                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-amber-100/60 border-r border-orange-200 align-middle text-gray-800">${day}</td>`;
-                    }
+                    if (sizeIndex === 0) shopeeHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-amber-100/60 border-r border-orange-200 align-middle text-gray-800">${day}</td>`;
                     shopeeHTML += `<td class="py-2 px-1 border-r border-gray-200 font-medium text-gray-700 text-left pl-2">${size}</td>`;
-                    shopeeHTML += `<td class="py-1 px-1 border-r border-gray-200">
-                        <input type="number" min="0" data-type="jumlah" data-platform="shopee" data-day="${day}" data-size="${size}" 
-                        class="w-full bg-orange-50/40 border border-orange-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-orange-400 outline-none" 
-                        oninput="calculateAll()">
-                    </td>`;
+                    shopeeHTML += `<td class="py-1 px-1 border-r border-gray-200"><input type="number" min="0" data-type="jumlah" data-platform="Shopee" data-day="${day}" data-size="${size}" class="w-full bg-orange-50/40 border border-orange-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-orange-400 outline-none" oninput="calculateAll()"></td>`;
                     if (sizeIndex === 0) {
-                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 bg-orange-50/70 border-r border-orange-200 align-middle">
-                            <input type="number" min="0" data-type="totalpaket" data-platform="shopee" data-day="${day}" 
-                            class="w-full bg-white border border-orange-300 rounded px-1 py-1.5 text-center font-bold text-orange-800 focus:ring-2 focus:ring-orange-500 outline-none" 
-                            oninput="calculateAll()">
-                        </td>`;
-                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-orange-200 align-middle">
-                            <input type="number" min="0" data-type="tarif" data-platform="shopee" data-day="${day}" value="1300"
-                            class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" 
-                            oninput="calculateAll()">
-                        </td>`;
+                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 bg-orange-50/70 border-r border-orange-200 align-middle"><input type="number" min="0" data-type="totalpaket" data-platform="Shopee" data-day="${day}" class="w-full bg-white border border-orange-300 rounded px-1 py-1.5 text-center font-bold text-orange-800 focus:ring-2 focus:ring-orange-500 outline-none" oninput="calculateAll()"></td>`;
+                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-orange-200 align-middle"><input type="number" min="0" data-type="tarif" data-platform="Shopee" data-day="${day}" value="1300" class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" oninput="calculateAll()"></td>`;
                         shopeeHTML += `<td rowspan="4" id="shopee-income-${day}" class="py-2 px-1 font-bold bg-blue-50/60 align-middle text-blue-900 text-xs">Rp 0</td>`;
                     }
                     shopeeHTML += `</tr>`;
 
                     // TikTok
                     tiktokHTML += `<tr class="${tiktokRowBg} border-b border-gray-200 text-center">`;
-                    if (sizeIndex === 0) {
-                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-purple-100/60 border-r border-purple-200 align-middle text-gray-800">${day}</td>`;
-                    }
+                    if (sizeIndex === 0) tiktokHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-purple-100/60 border-r border-purple-200 align-middle text-gray-800">${day}</td>`;
                     tiktokHTML += `<td class="py-2 px-1 border-r border-gray-200 font-medium text-gray-700 text-left pl-2">${size}</td>`;
-                    tiktokHTML += `<td class="py-1 px-1 border-r border-gray-200">
-                        <input type="number" min="0" data-type="jumlah" data-platform="tiktok" data-day="${day}" data-size="${size}" 
-                        class="w-full bg-purple-50/40 border border-purple-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-purple-400 outline-none" 
-                        oninput="calculateAll()">
-                    </td>`;
+                    tiktokHTML += `<td class="py-1 px-1 border-r border-gray-200"><input type="number" min="0" data-type="jumlah" data-platform="TikTok" data-day="${day}" data-size="${size}" class="w-full bg-purple-50/40 border border-purple-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-purple-400 outline-none" oninput="calculateAll()"></td>`;
                     if (sizeIndex === 0) {
-                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 bg-purple-50/70 border-r border-purple-200 align-middle">
-                            <input type="number" min="0" data-type="totalpaket" data-platform="tiktok" data-day="${day}" 
-                            class="w-full bg-white border border-purple-300 rounded px-1 py-1.5 text-center font-bold text-purple-800 focus:ring-2 focus:ring-purple-500 outline-none" 
-                            oninput="calculateAll()">
-                        </td>`;
-                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-purple-200 align-middle">
-                            <input type="number" min="0" data-type="tarif" data-platform="tiktok" data-day="${day}" value="1300"
-                            class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" 
-                            oninput="calculateAll()">
-                        </td>`;
+                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 bg-purple-50/70 border-r border-purple-200 align-middle"><input type="number" min="0" data-type="totalpaket" data-platform="TikTok" data-day="${day}" class="w-full bg-white border border-purple-300 rounded px-1 py-1.5 text-center font-bold text-purple-800 focus:ring-2 focus:ring-purple-500 outline-none" oninput="calculateAll()"></td>`;
+                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-purple-200 align-middle"><input type="number" min="0" data-type="tarif" data-platform="TikTok" data-day="${day}" value="1300" class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" oninput="calculateAll()"></td>`;
                         tiktokHTML += `<td rowspan="4" id="tiktok-income-${day}" class="py-2 px-1 font-bold bg-blue-50/60 align-middle text-blue-900 text-xs">Rp 0</td>`;
                     }
                     tiktokHTML += `</tr>`;
@@ -190,136 +162,109 @@
 
             shopeeBody.innerHTML = shopeeHTML;
             tiktokBody.innerHTML = tiktokHTML;
-            loadData();
+            loadDataFromSheets();
         }
 
         function calculateAll() {
-            let sumShopeeTotal = 0;
-            let sumShopeeEarnings = 0;
-            let sumTiktokTotal = 0;
-            let sumTiktokEarnings = 0;
-            const savedData = {};
+            let sumShopeeTotal = 0, sumShopeeEarnings = 0, sumTiktokTotal = 0, sumTiktokEarnings = 0;
 
             days.forEach(day => {
-                // Shopee
-                const sTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="shopee"][data-day="${day}"]`);
-                const sTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="shopee"][data-day="${day}"]`);
+                const sTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="Shopee"][data-day="${day}"]`);
+                const sTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="Shopee"][data-day="${day}"]`);
                 const sVal = parseInt(sTotalInput.value) || 0;
                 const sTarif = parseFloat(sTarifInput.value) || 0;
                 const sIncome = sVal * sTarif;
-
                 sumShopeeTotal += sVal;
                 sumShopeeEarnings += sIncome;
                 document.getElementById(`shopee-income-${day}`).innerText = 'Rp ' + sIncome.toLocaleString('id-ID');
 
-                if (sTotalInput.value) savedData[`shopee_tot_${day}`] = sTotalInput.value;
-                if (sTarifInput.value && sTarifInput.value !== '1300') savedData[`shopee_tarif_${day}`] = sTarifInput.value;
-
-                sizes.forEach(size => {
-                    const sInput = document.querySelector(`input[data-type="jumlah"][data-platform="shopee"][data-day="${day}"][data-size="${size}"]`);
-                    if (sInput.value) savedData[`shopee_qty_${day}_${size}`] = sInput.value;
-                });
-
-                // TikTok
-                const tTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="tiktok"][data-day="${day}"]`);
-                const tTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="tiktok"][data-day="${day}"]`);
+                const tTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="TikTok"][data-day="${day}"]`);
+                const tTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="TikTok"][data-day="${day}"]`);
                 const tVal = parseInt(tTotalInput.value) || 0;
                 const tTarif = parseFloat(tTarifInput.value) || 0;
                 const tIncome = tVal * tTarif;
-
                 sumTiktokTotal += tVal;
                 sumTiktokEarnings += tIncome;
                 document.getElementById(`tiktok-income-${day}`).innerText = 'Rp ' + tIncome.toLocaleString('id-ID');
-
-                if (tTotalInput.value) savedData[`tiktok_tot_${day}`] = tTotalInput.value;
-                if (tTarifInput.value && tTarifInput.value !== '1300') savedData[`tiktok_tarif_${day}`] = tTarifInput.value;
-
-                sizes.forEach(size => {
-                    const tInput = document.querySelector(`input[data-type="jumlah"][data-platform="tiktok"][data-day="${day}"][data-size="${size}"]`);
-                    if (tInput.value) savedData[`tiktok_qty_${day}_${size}`] = tInput.value;
-                });
             });
 
             document.getElementById('shopeeFooterTotal').innerText = sumShopeeTotal;
             document.getElementById('shopeeFooterEarnings').innerText = 'Rp ' + sumShopeeEarnings.toLocaleString('id-ID');
-
             document.getElementById('tiktokFooterTotal').innerText = sumTiktokTotal;
             document.getElementById('tiktokFooterEarnings').innerText = 'Rp ' + sumTiktokEarnings.toLocaleString('id-ID');
 
-            const grandTotal = sumShopeeTotal + sumTiktokTotal;
-            const grandEarnings = sumShopeeEarnings + sumTiktokEarnings;
-
             document.getElementById('totalShopee').innerText = sumShopeeTotal;
             document.getElementById('totalTiktok').innerText = sumTiktokTotal;
-            document.getElementById('totalAll').innerText = grandTotal;
-            document.getElementById('totalEarnings').innerText = 'Rp ' + grandEarnings.toLocaleString('id-ID');
-
-            localStorage.setItem('bls_sport_sheets_cache', JSON.stringify(savedData));
+            document.getElementById('totalAll').innerText = sumShopeeTotal + sumTiktokTotal;
+            document.getElementById('totalEarnings').innerText = 'Rp ' + (sumShopeeEarnings + sumTiktokEarnings).toLocaleString('id-ID');
         }
 
-        function loadData() {
-            const saved = localStorage.getItem('bls_sport_sheets_cache');
-            if (!saved) return;
-            try {
-                const data = JSON.parse(saved);
-                for (const key in data) {
-                    const parts = key.split('_');
-                    const platform = parts[0];
-                    const type = parts[1]; 
-                    const day = parts[2];
-                    
-                    if (type === 'tot') {
-                        const input = document.querySelector(`input[data-type="totalpaket"][data-platform="${platform}"][data-day="${day}"]`);
-                        if (input) input.value = data[key];
-                    } else if (type === 'tarif') {
-                        const input = document.querySelector(`input[data-type="tarif"][data-platform="${platform}"][data-day="${day}"]`);
-                        if (input) input.value = data[key];
-                    } else if (type === 'qty') {
-                        const size = parts[3];
-                        const input = document.querySelector(`input[data-type="jumlah"][data-platform="${platform}"][data-day="${day}"][data-size="${size}"]`);
-                        if (input) input.value = data[key];
+        // Otomatis tarik data dari Google Sheets saat web dibuka
+        function loadDataFromSheets() {
+            showNotification("Memuat data dari Google Sheets...", "bg-blue-500");
+            fetch(SCRIPT_URL)
+            .then(res => res.json())
+            .then(rows => {
+                if (!rows || rows.length <= 1) {
+                    showNotification("Data kosong", "bg-gray-500");
+                    return;
+                }
+                // Lewati baris pertama (header)
+                for (let i = 1; i < rows.length; i++) {
+                    let r = rows[i];
+                    let platform = r[0]; // Shopee / TikTok
+                    let day = r[1];      // SENIN - SABTU
+                    let size = r[2];     // M, L, JUMBO, TRAINING
+                    let qty = r[3];
+                    let totalPaket = r[4];
+                    let tarif = r[5];
+
+                    if (qty > 0) {
+                        let qtyInput = document.querySelector(`input[data-type="jumlah"][data-platform="${platform}"][data-day="${day}"][data-size="${size}"]`);
+                        if (qtyInput) qtyInput.value = qty;
+                    }
+                    if (totalPaket > 0) {
+                        let totInput = document.querySelector(`input[data-type="totalpaket"][data-platform="${platform}"][data-day="${day}"]`);
+                        if (totInput) totInput.value = totalPaket;
+                    }
+                    if (tarif > 0) {
+                        let tarifInput = document.querySelector(`input[data-type="tarif"][data-platform="${platform}"][data-day="${day}"]`);
+                        if (tarifInput) tarifInput.value = tarif;
                     }
                 }
                 calculateAll();
-            } catch (e) { console.error(e); }
+                showNotification("Data berhasil dimuat dari Sheets!", "bg-emerald-600");
+            })
+            .catch(err => {
+                showNotification("Gagal memuat data dari Sheets", "bg-red-600");
+            });
         }
 
-        function saveToSheets() {
+        function saveToSheetsWithAuth() {
+            let pin = prompt("Masukkan PIN Admin untuk menyimpan data ke Sheets:");
+            if (pin !== ADMIN_PIN) {
+                alert("PIN Salah! Anda tidak memiliki hak akses untuk menyimpan data.");
+                return;
+            }
+
             const btn = document.getElementById('btnSave');
             btn.innerText = "⏳ Menyimpan...";
             btn.disabled = true;
 
             let rowsData = [];
-
             days.forEach(day => {
-                let sTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="shopee"][data-day="${day}"]`).value || 0;
-                let sTarif = document.querySelector(`input[data-type="tarif"][data-platform="shopee"][data-day="${day}"]`).value || 1300;
+                let sTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="Shopee"][data-day="${day}"]`).value || 0;
+                let sTarif = document.querySelector(`input[data-type="tarif"][data-platform="Shopee"][data-day="${day}"]`).value || 1300;
                 sizes.forEach(size => {
-                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="shopee"][data-day="${day}"][data-size="${size}"]`).value || 0;
-                    rowsData.push({
-                        platform: "Shopee",
-                        hari: day,
-                        ukuran: size,
-                        jumlah: qty,
-                        totalPaket: sTotal,
-                        tarif: sTarif,
-                        totalPotongan: sTotal * sTarif
-                    });
+                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="Shopee"][data-day="${day}"][data-size="${size}"]`).value || 0;
+                    rowsData.push({ platform: "Shopee", hari: day, ukuran: size, jumlah: qty, totalPaket: sTotal, tarif: sTarif, totalPotongan: sTotal * sTarif });
                 });
 
-                let tTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="tiktok"][data-day="${day}"]`).value || 0;
-                let tTarif = document.querySelector(`input[data-type="tarif"][data-platform="tiktok"][data-day="${day}"]`).value || 1300;
+                let tTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="TikTok"][data-day="${day}"]`).value || 0;
+                let tTarif = document.querySelector(`input[data-type="tarif"][data-platform="TikTok"][data-day="${day}"]`).value || 1300;
                 sizes.forEach(size => {
-                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="tiktok"][data-day="${day}"][data-size="${size}"]`).value || 0;
-                    rowsData.push({
-                        platform: "TikTok",
-                        hari: day,
-                        ukuran: size,
-                        jumlah: qty,
-                        totalPaket: tTotal,
-                        tarif: tTarif,
-                        totalPotongan: tTotal * tTarif
-                    });
+                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="TikTok"][data-day="${day}"][data-size="${size}"]`).value || 0;
+                    rowsData.push({ platform: "TikTok", hari: day, ukuran: size, jumlah: qty, totalPaket: tTotal, tarif: tTarif, totalPotongan: tTotal * tTarif });
                 });
             });
 
@@ -333,15 +278,20 @@
                 btn.innerText = "💾 Simpan ke Sheets";
                 btn.disabled = false;
             }).catch(err => {
-                showNotification("Gagal menyimpan ke Sheets!", "bg-red-600");
-                btn.innerText = "💾 Simpan ke Sheets";
+                showNotification("Gagal menyimpan!", "bg-red-600");
+                btn.innerText = "💾 Simpan to Sheets";
                 btn.disabled = false;
             });
         }
 
-        function resetData() {
-            if (confirm("Reset semua data di form dan bersihkan Google Sheets?")) {
-                localStorage.removeItem('bls_sport_sheets_cache');
+        function resetDataWithAuth() {
+            let pin = prompt("Masukkan PIN Admin untuk mereset data:");
+            if (pin !== ADMIN_PIN) {
+                alert("PIN Salah! Anda tidak memiliki hak akses.");
+                return;
+            }
+
+            if (confirm("Reset total semua data di Google Sheets?")) {
                 document.querySelectorAll('input[type="number"]').forEach(input => {
                     if (input.dataset.type !== 'tarif') input.value = '';
                     else input.value = '1300';
