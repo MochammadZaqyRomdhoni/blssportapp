@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLS SPORT - Rekap Potongan Paket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-2 sm:p-6">
+    <div class="max-w-[1500px] mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-orange-600 to-amber-600 p-4 sm:p-6 text-white flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold tracking-wide uppercase text-center sm:text-left">BLS SPORT PENGELUARAN BARANG</h1>
+                <p class="text-orange-100 text-xs sm:text-sm mt-1 text-center sm:text-left">Terhubung ke Google Sheets (Tarif Rp 1.300 / Paket)</p>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap justify-center">
+                <button onclick="saveToSheets()" id="btnSave" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition shadow flex items-center gap-1">
+                    💾 Simpan ke Sheets
+                </button>
+                <button onclick="resetData()" class="bg-red-500 hover:bg-red-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition shadow">
+                    🔄 Reset Data
+                </button>
+            </div>
+        </div>
+
+        <!-- Notification Banner -->
+        <div id="statusMessage" class="hidden px-4 py-2 text-xs font-semibold text-center transition-all"></div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-orange-50/50 border-b border-orange-100">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-200">
+                <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Paket Shopee</p>
+                <h3 id="totalShopee" class="text-xl font-bold text-orange-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-purple-200">
+                <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Paket TikTok</p>
+                <h3 id="totalTiktok" class="text-xl font-bold text-purple-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-emerald-200">
+                <p class="text-[11px] text-gray-500 font-semibold uppercase">Keseluruhan Paket</p>
+                <h3 id="totalAll" class="text-xl font-bold text-emerald-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-blue-200">
+                <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Potongan Keseluruhan</p>
+                <h3 id="totalEarnings" class="text-xl font-bold text-blue-600 mt-1">Rp 0</h3>
+            </div>
+        </div>
+
+        <!-- Main Tables Container -->
+        <div class="p-4">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- SHOPEE TABLE -->
+                <div class="rounded-xl border border-orange-300 shadow-sm overflow-hidden bg-white">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#ED7D31] text-white text-center">
+                                <th colspan="6" class="py-2.5 px-3 text-base font-bold tracking-wider">SHOPEE</th>
+                            </tr>
+                            <tr class="bg-[#FCE4D6] text-gray-900 text-[11px] font-bold border-b border-orange-300 text-center">
+                                <th class="py-2 px-1 border-r border-orange-300 w-[16%]">HARI</th>
+                                <th class="py-2 px-1 border-r border-orange-300 w-[16%]">UKURAN</th>
+                                <th class="py-2 px-1 border-r border-orange-300 w-[16%]">JUMLAH</th>
+                                <th class="py-2 px-1 border-r border-orange-300 w-[18%]">TOTAL PAKET</th>
+                                <th class="py-2 px-1 border-r border-orange-300 w-[16%]">TARIF</th>
+                                <th class="py-2 px-1 w-[18%]">TOTAL POTONGAN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shopeeTableBody" class="text-xs"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-200 font-bold text-gray-900 border-t-2 border-gray-400 text-center">
+                                <td colspan="3" class="py-2.5 px-3 text-right">TOTAL</td>
+                                <td id="shopeeFooterTotal" class="py-2.5 px-2 text-orange-700 bg-orange-100 text-sm">0</td>
+                                <td class="py-2.5 px-2">-</td>
+                                <td id="shopeeFooterEarnings" class="py-2.5 px-2 text-blue-700 bg-blue-50 text-sm">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- TIKTOK TABLE -->
+                <div class="rounded-xl border border-purple-300 shadow-sm overflow-hidden bg-white">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#8B5CF6] text-white text-center">
+                                <th colspan="6" class="py-2.5 px-3 text-base font-bold tracking-wider">TIKTOK</th>
+                            </tr>
+                            <tr class="bg-[#EDE9FE] text-gray-900 text-[11px] font-bold border-b border-purple-300 text-center">
+                                <th class="py-2 px-1 border-r border-purple-300 w-[16%]">HARI</th>
+                                <th class="py-2 px-1 border-r border-purple-300 w-[16%]">UKURAN</th>
+                                <th class="py-2 px-1 border-r border-purple-300 w-[16%]">JUMLAH</th>
+                                <th class="py-2 px-1 border-r border-purple-300 w-[18%]">TOTAL PAKET</th>
+                                <th class="py-2 px-1 border-r border-purple-300 w-[16%]">TARIF</th>
+                                <th class="py-2 px-1 w-[18%]">TOTAL POTONGAN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tiktokTableBody" class="text-xs"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-200 font-bold text-gray-900 border-t-2 border-gray-400 text-center">
+                                <td colspan="3" class="py-2.5 px-3 text-right">TOTAL</td>
+                                <td id="tiktokFooterTotal" class="py-2.5 px-2 text-purple-700 bg-purple-100 text-sm">0</td>
+                                <td class="py-2.5 px-2">-</td>
+                                <td id="tiktokFooterEarnings" class="py-2.5 px-2 text-blue-700 bg-blue-50 text-sm">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // URL Google Apps Script Anda sudah terpasang di sini:
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXTqVoEnlNORy0xE3ObMFdKTWdv8IZ5qKY-iAEgd1gPDhzzF8r6q6tTocW1ZoulRGA/exec";
+
+        const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+        const sizes = ['M', 'L', 'JUMBO', 'TRAINING'];
+
+        function initTables() {
+            const shopeeBody = document.getElementById('shopeeTableBody');
+            const tiktokBody = document.getElementById('tiktokTableBody');
+
+            let shopeeHTML = '';
+            let tiktokHTML = '';
+
+            days.forEach((day, dayIndex) => {
+                sizes.forEach((size, sizeIndex) => {
+                    const rowBg = dayIndex % 2 === 0 ? 'bg-white' : 'bg-amber-50/20';
+                    const tiktokRowBg = dayIndex % 2 === 0 ? 'bg-white' : 'bg-purple-50/20';
+                    
+                    // Shopee
+                    shopeeHTML += `<tr class="${rowBg} border-b border-gray-200 text-center">`;
+                    if (sizeIndex === 0) {
+                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-amber-100/60 border-r border-orange-200 align-middle text-gray-800">${day}</td>`;
+                    }
+                    shopeeHTML += `<td class="py-2 px-1 border-r border-gray-200 font-medium text-gray-700 text-left pl-2">${size}</td>`;
+                    shopeeHTML += `<td class="py-1 px-1 border-r border-gray-200">
+                        <input type="number" min="0" data-type="jumlah" data-platform="shopee" data-day="${day}" data-size="${size}" 
+                        class="w-full bg-orange-50/40 border border-orange-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-orange-400 outline-none" 
+                        oninput="calculateAll()">
+                    </td>`;
+                    if (sizeIndex === 0) {
+                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 bg-orange-50/70 border-r border-orange-200 align-middle">
+                            <input type="number" min="0" data-type="totalpaket" data-platform="shopee" data-day="${day}" 
+                            class="w-full bg-white border border-orange-300 rounded px-1 py-1.5 text-center font-bold text-orange-800 focus:ring-2 focus:ring-orange-500 outline-none" 
+                            oninput="calculateAll()">
+                        </td>`;
+                        shopeeHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-orange-200 align-middle">
+                            <input type="number" min="0" data-type="tarif" data-platform="shopee" data-day="${day}" value="1300"
+                            class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" 
+                            oninput="calculateAll()">
+                        </td>`;
+                        shopeeHTML += `<td rowspan="4" id="shopee-income-${day}" class="py-2 px-1 font-bold bg-blue-50/60 align-middle text-blue-900 text-xs">Rp 0</td>`;
+                    }
+                    shopeeHTML += `</tr>`;
+
+                    // TikTok
+                    tiktokHTML += `<tr class="${tiktokRowBg} border-b border-gray-200 text-center">`;
+                    if (sizeIndex === 0) {
+                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-purple-100/60 border-r border-purple-200 align-middle text-gray-800">${day}</td>`;
+                    }
+                    tiktokHTML += `<td class="py-2 px-1 border-r border-gray-200 font-medium text-gray-700 text-left pl-2">${size}</td>`;
+                    tiktokHTML += `<td class="py-1 px-1 border-r border-gray-200">
+                        <input type="number" min="0" data-type="jumlah" data-platform="tiktok" data-day="${day}" data-size="${size}" 
+                        class="w-full bg-purple-50/40 border border-purple-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-purple-400 outline-none" 
+                        oninput="calculateAll()">
+                    </td>`;
+                    if (sizeIndex === 0) {
+                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 bg-purple-50/70 border-r border-purple-200 align-middle">
+                            <input type="number" min="0" data-type="totalpaket" data-platform="tiktok" data-day="${day}" 
+                            class="w-full bg-white border border-purple-300 rounded px-1 py-1.5 text-center font-bold text-purple-800 focus:ring-2 focus:ring-purple-500 outline-none" 
+                            oninput="calculateAll()">
+                        </td>`;
+                        tiktokHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-purple-200 align-middle">
+                            <input type="number" min="0" data-type="tarif" data-platform="tiktok" data-day="${day}" value="1300"
+                            class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" 
+                            oninput="calculateAll()">
+                        </td>`;
+                        tiktokHTML += `<td rowspan="4" id="tiktok-income-${day}" class="py-2 px-1 font-bold bg-blue-50/60 align-middle text-blue-900 text-xs">Rp 0</td>`;
+                    }
+                    tiktokHTML += `</tr>`;
+                });
+            });
+
+            shopeeBody.innerHTML = shopeeHTML;
+            tiktokBody.innerHTML = tiktokHTML;
+            loadData();
+        }
+
+        function calculateAll() {
+            let sumShopeeTotal = 0;
+            let sumShopeeEarnings = 0;
+            let sumTiktokTotal = 0;
+            let sumTiktokEarnings = 0;
+            const savedData = {};
+
+            days.forEach(day => {
+                // Shopee
+                const sTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="shopee"][data-day="${day}"]`);
+                const sTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="shopee"][data-day="${day}"]`);
+                const sVal = parseInt(sTotalInput.value) || 0;
+                const sTarif = parseFloat(sTarifInput.value) || 0;
+                const sIncome = sVal * sTarif;
+
+                sumShopeeTotal += sVal;
+                sumShopeeEarnings += sIncome;
+                document.getElementById(`shopee-income-${day}`).innerText = 'Rp ' + sIncome.toLocaleString('id-ID');
+
+                if (sTotalInput.value) savedData[`shopee_tot_${day}`] = sTotalInput.value;
+                if (sTarifInput.value && sTarifInput.value !== '1300') savedData[`shopee_tarif_${day}`] = sTarifInput.value;
+
+                sizes.forEach(size => {
+                    const sInput = document.querySelector(`input[data-type="jumlah"][data-platform="shopee"][data-day="${day}"][data-size="${size}"]`);
+                    if (sInput.value) savedData[`shopee_qty_${day}_${size}`] = sInput.value;
+                });
+
+                // TikTok
+                const tTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="tiktok"][data-day="${day}"]`);
+                const tTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="tiktok"][data-day="${day}"]`);
+                const tVal = parseInt(tTotalInput.value) || 0;
+                const tTarif = parseFloat(tTarifInput.value) || 0;
+                const tIncome = tVal * tTarif;
+
+                sumTiktokTotal += tVal;
+                sumTiktokEarnings += tIncome;
+                document.getElementById(`tiktok-income-${day}`).innerText = 'Rp ' + tIncome.toLocaleString('id-ID');
+
+                if (tTotalInput.value) savedData[`tiktok_tot_${day}`] = tTotalInput.value;
+                if (tTarifInput.value && tTarifInput.value !== '1300') savedData[`tiktok_tarif_${day}`] = tTarifInput.value;
+
+                sizes.forEach(size => {
+                    const tInput = document.querySelector(`input[data-type="jumlah"][data-platform="tiktok"][data-day="${day}"][data-size="${size}"]`);
+                    if (tInput.value) savedData[`tiktok_qty_${day}_${size}`] = tInput.value;
+                });
+            });
+
+            document.getElementById('shopeeFooterTotal').innerText = sumShopeeTotal;
+            document.getElementById('shopeeFooterEarnings').innerText = 'Rp ' + sumShopeeEarnings.toLocaleString('id-ID');
+
+            document.getElementById('tiktokFooterTotal').innerText = sumTiktokTotal;
+            document.getElementById('tiktokFooterEarnings').innerText = 'Rp ' + sumTiktokEarnings.toLocaleString('id-ID');
+
+            const grandTotal = sumShopeeTotal + sumTiktokTotal;
+            const grandEarnings = sumShopeeEarnings + sumTiktokEarnings;
+
+            document.getElementById('totalShopee').innerText = sumShopeeTotal;
+            document.getElementById('totalTiktok').innerText = sumTiktokTotal;
+            document.getElementById('totalAll').innerText = grandTotal;
+            document.getElementById('totalEarnings').innerText = 'Rp ' + grandEarnings.toLocaleString('id-ID');
+
+            localStorage.setItem('bls_sport_sheets_cache', JSON.stringify(savedData));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('bls_sport_sheets_cache');
+            if (!saved) return;
+            try {
+                const data = JSON.parse(saved);
+                for (const key in data) {
+                    const parts = key.split('_');
+                    const platform = parts[0];
+                    const type = parts[1]; 
+                    const day = parts[2];
+                    
+                    if (type === 'tot') {
+                        const input = document.querySelector(`input[data-type="totalpaket"][data-platform="${platform}"][data-day="${day}"]`);
+                        if (input) input.value = data[key];
+                    } else if (type === 'tarif') {
+                        const input = document.querySelector(`input[data-type="tarif"][data-platform="${platform}"][data-day="${day}"]`);
+                        if (input) input.value = data[key];
+                    } else if (type === 'qty') {
+                        const size = parts[3];
+                        const input = document.querySelector(`input[data-type="jumlah"][data-platform="${platform}"][data-day="${day}"][data-size="${size}"]`);
+                        if (input) input.value = data[key];
+                    }
+                }
+                calculateAll();
+            } catch (e) { console.error(e); }
+        }
+
+        function saveToSheets() {
+            const btn = document.getElementById('btnSave');
+            btn.innerText = "⏳ Menyimpan...";
+            btn.disabled = true;
+
+            let rowsData = [];
+
+            days.forEach(day => {
+                let sTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="shopee"][data-day="${day}"]`).value || 0;
+                let sTarif = document.querySelector(`input[data-type="tarif"][data-platform="shopee"][data-day="${day}"]`).value || 1300;
+                sizes.forEach(size => {
+                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="shopee"][data-day="${day}"][data-size="${size}"]`).value || 0;
+                    rowsData.push({
+                        platform: "Shopee",
+                        hari: day,
+                        ukuran: size,
+                        jumlah: qty,
+                        totalPaket: sTotal,
+                        tarif: sTarif,
+                        totalPotongan: sTotal * sTarif
+                    });
+                });
+
+                let tTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="tiktok"][data-day="${day}"]`).value || 0;
+                let tTarif = document.querySelector(`input[data-type="tarif"][data-platform="tiktok"][data-day="${day}"]`).value || 1300;
+                sizes.forEach(size => {
+                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="tiktok"][data-day="${day}"][data-size="${size}"]`).value || 0;
+                    rowsData.push({
+                        platform: "TikTok",
+                        hari: day,
+                        ukuran: size,
+                        jumlah: qty,
+                        totalPaket: tTotal,
+                        tarif: tTarif,
+                        totalPotongan: tTotal * tTarif
+                    });
+                });
+            });
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "save", rows: rowsData })
+            }).then(() => {
+                showNotification("Berhasil disimpan ke Google Sheets!", "bg-emerald-600");
+                btn.innerText = "💾 Simpan ke Sheets";
+                btn.disabled = false;
+            }).catch(err => {
+                showNotification("Gagal menyimpan ke Sheets!", "bg-red-600");
+                btn.innerText = "💾 Simpan ke Sheets";
+                btn.disabled = false;
+            });
+        }
+
+        function resetData() {
+            if (confirm("Reset semua data di form dan bersihkan Google Sheets?")) {
+                localStorage.removeItem('bls_sport_sheets_cache');
+                document.querySelectorAll('input[type="number"]').forEach(input => {
+                    if (input.dataset.type !== 'tarif') input.value = '';
+                    else input.value = '1300';
+                });
+                calculateAll();
+
+                fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "reset" })
+                }).then(() => {
+                    showNotification("Data berhasil direset total!", "bg-orange-600");
+                });
+            }
+        }
+
+        function showNotification(msg, colorClass) {
+            const notif = document.getElementById('statusMessage');
+            notif.innerText = msg;
+            notif.className = `px-4 py-2 text-xs font-semibold text-center text-white ${colorClass} transition-all`;
+            notif.classList.remove('hidden');
+            setTimeout(() => { notif.classList.add('hidden'); }, 3000);
+        }
+
+        window.onload = initTables;
+    </script>
+</body>
+</html>
