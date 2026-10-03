@@ -116,9 +116,10 @@
     </div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXTqVoEnlNORy0xE3ObMFdKTWdv8IZ5qKY-iAEgd1gPDhzzF8r6q6tTocW1ZoulRGA/exec";
+        // URL Google Apps Script yang baru terpasang di sini:
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxL18DaznLpXIFD6k5z5pKOqh_50grHLoY6Wr58VgwkrwlLWZBOAANLf9nD7snZQMOj/exec";
         
-        // GANTI PIN INI SESUAI KEINGINAN ANDA (Hanya Anda yang tahu PIN ini untuk menyimpan/reset data)
+        // PIN Admin (Silakan ganti jika ingin PIN lain)
         const ADMIN_PIN = "1234";
 
         const days = ['SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
@@ -199,7 +200,6 @@
             document.getElementById('totalEarnings').innerText = 'Rp ' + (sumShopeeEarnings + sumTiktokEarnings).toLocaleString('id-ID');
         }
 
-        // Otomatis tarik data dari Google Sheets saat web dibuka
         function loadDataFromSheets() {
             showNotification("Memuat data dari Google Sheets...", "bg-blue-500");
             fetch(SCRIPT_URL)
@@ -209,12 +209,11 @@
                     showNotification("Data kosong", "bg-gray-500");
                     return;
                 }
-                // Lewati baris pertama (header)
                 for (let i = 1; i < rows.length; i++) {
                     let r = rows[i];
-                    let platform = r[0]; // Shopee / TikTok
-                    let day = r[1];      // SENIN - SABTU
-                    let size = r[2];     // M, L, JUMBO, TRAINING
+                    let platform = r[0]; 
+                    let day = r[1];      
+                    let size = r[2];     
                     let qty = r[3];
                     let totalPaket = r[4];
                     let tarif = r[5];
@@ -279,7 +278,7 @@
                 btn.disabled = false;
             }).catch(err => {
                 showNotification("Gagal menyimpan!", "bg-red-600");
-                btn.innerText = "💾 Simpan to Sheets";
+                btn.innerText = "💾 Simpan ke Sheets";
                 btn.disabled = false;
             });
         }
