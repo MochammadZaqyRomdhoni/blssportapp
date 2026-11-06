@@ -13,7 +13,7 @@
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen p-2 sm:p-6">
-    <div class="max-w-[1500px] mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+    <div class="max-w-[1700px] mx-auto bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
         <!-- Header -->
         <div class="bg-gradient-to-r from-orange-600 to-amber-600 p-4 sm:p-6 text-white flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
@@ -34,10 +34,14 @@
         <div id="statusMessage" class="hidden px-4 py-2 text-xs font-semibold text-center transition-all"></div>
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-orange-50/50 border-b border-orange-100">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 p-4 bg-orange-50/50 border-b border-orange-100">
             <div class="bg-white p-3 rounded-xl shadow-sm border border-orange-200">
                 <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Paket Shopee</p>
                 <h3 id="totalShopee" class="text-xl font-bold text-orange-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-rose-200">
+                <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Shopee Dropship</p>
+                <h3 id="totalShopeeDropship" class="text-xl font-bold text-rose-600 mt-1">0</h3>
             </div>
             <div class="bg-white p-3 rounded-xl shadow-sm border border-purple-200">
                 <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Paket TikTok</p>
@@ -47,7 +51,7 @@
                 <p class="text-[11px] text-gray-500 font-semibold uppercase">Keseluruhan Paket</p>
                 <h3 id="totalAll" class="text-xl font-bold text-emerald-600 mt-1">0</h3>
             </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-blue-200">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-blue-200 col-span-2 md:col-span-1">
                 <p class="text-[11px] text-gray-500 font-semibold uppercase">Total Potongan Keseluruhan</p>
                 <h3 id="totalEarnings" class="text-xl font-bold text-blue-600 mt-1">Rp 0</h3>
             </div>
@@ -55,7 +59,7 @@
 
         <!-- Main Tables Container -->
         <div class="p-4">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- SHOPEE TABLE -->
                 <div class="rounded-xl border border-orange-300 shadow-sm overflow-hidden bg-white">
                     <table class="w-full text-left border-collapse">
@@ -79,6 +83,34 @@
                                 <td id="shopeeFooterTotal" class="py-2.5 px-2 text-orange-700 bg-orange-100 text-sm">0</td>
                                 <td class="py-2.5 px-2">-</td>
                                 <td id="shopeeFooterEarnings" class="py-2.5 px-2 text-blue-700 bg-blue-50 text-sm">Rp 0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- SHOPEE DROPSHIP TABLE -->
+                <div class="rounded-xl border border-rose-300 shadow-sm overflow-hidden bg-white">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-[#E11D48] text-white text-center">
+                                <th colspan="6" class="py-2.5 px-3 text-base font-bold tracking-wider">SHOPEE DROPSHIP</th>
+                            </tr>
+                            <tr class="bg-[#FFE4E6] text-gray-900 text-[11px] font-bold border-b border-rose-300 text-center">
+                                <th class="py-2 px-1 border-r border-rose-300 w-[16%]">HARI</th>
+                                <th class="py-2 px-1 border-r border-rose-300 w-[16%]">UKURAN</th>
+                                <th class="py-2 px-1 border-r border-rose-300 w-[16%]">JUMLAH</th>
+                                <th class="py-2 px-1 border-r border-rose-300 w-[18%]">TOTAL PAKET</th>
+                                <th class="py-2 px-1 border-r border-rose-300 w-[16%]">TARIF</th>
+                                <th class="py-2 px-1 w-[18%]">TOTAL POTONGAN</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shopeeDropshipTableBody" class="text-xs"></tbody>
+                        <tfoot>
+                            <tr class="bg-gray-200 font-bold text-gray-900 border-t-2 border-gray-400 text-center">
+                                <td colspan="3" class="py-2.5 px-3 text-right">TOTAL</td>
+                                <td id="shopeeDropshipFooterTotal" class="py-2.5 px-2 text-rose-700 bg-rose-100 text-sm">0</td>
+                                <td class="py-2.5 px-2">-</td>
+                                <td id="shopeeDropshipFooterEarnings" class="py-2.5 px-2 text-blue-700 bg-blue-50 text-sm">Rp 0</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -127,12 +159,14 @@
 
         function initTables() {
             const shopeeBody = document.getElementById('shopeeTableBody');
+            const shopeeDropshipBody = document.getElementById('shopeeDropshipTableBody');
             const tiktokBody = document.getElementById('tiktokTableBody');
-            let shopeeHTML = '', tiktokHTML = '';
+            let shopeeHTML = '', shopeeDropshipHTML = '', tiktokHTML = '';
 
             days.forEach((day, dayIndex) => {
                 sizes.forEach((size, sizeIndex) => {
                     const rowBg = dayIndex % 2 === 0 ? 'bg-white' : 'bg-amber-50/20';
+                    const dropshipRowBg = dayIndex % 2 === 0 ? 'bg-white' : 'bg-rose-50/20';
                     const tiktokRowBg = dayIndex % 2 === 0 ? 'bg-white' : 'bg-purple-50/20';
                     
                     // Shopee
@@ -146,6 +180,18 @@
                         shopeeHTML += `<td rowspan="4" id="shopee-income-${day}" class="py-2 px-1 font-bold bg-blue-50/60 align-middle text-blue-900 text-xs">Rp 0</td>`;
                     }
                     shopeeHTML += `</tr>`;
+
+                    // Shopee Dropship
+                    shopeeDropshipHTML += `<tr class="${dropshipRowBg} border-b border-gray-200 text-center">`;
+                    if (sizeIndex === 0) shopeeDropshipHTML += `<td rowspan="4" class="py-2 px-1 font-bold bg-rose-100/60 border-r border-rose-200 align-middle text-gray-800">${day}</td>`;
+                    shopeeDropshipHTML += `<td class="py-2 px-1 border-r border-gray-200 font-medium text-gray-700 text-left pl-2">${size}</td>`;
+                    shopeeDropshipHTML += `<td class="py-1 px-1 border-r border-gray-200"><input type="number" min="0" data-type="jumlah" data-platform="Shopee Dropship" data-day="${day}" data-size="${size}" class="w-full bg-rose-50/40 border border-rose-200 rounded px-1 py-1 text-center font-semibold text-gray-800 focus:bg-white focus:ring-1 focus:ring-rose-400 outline-none" oninput="calculateAll()"></td>`;
+                    if (sizeIndex === 0) {
+                        shopeeDropshipHTML += `<td rowspan="4" class="py-2 px-1 bg-rose-50/70 border-r border-rose-200 align-middle"><input type="number" min="0" data-type="totalpaket" data-platform="Shopee Dropship" data-day="${day}" class="w-full bg-white border border-rose-300 rounded px-1 py-1.5 text-center font-bold text-rose-800 focus:ring-2 focus:ring-rose-500 outline-none" oninput="calculateAll()"></td>`;
+                        shopeeDropshipHTML += `<td rowspan="4" class="py-2 px-1 bg-gray-50 border-r border-rose-200 align-middle"><input type="number" min="0" data-type="tarif" data-platform="Shopee Dropship" data-day="${day}" value="600" class="w-full bg-white border border-gray-300 rounded px-1 py-1.5 text-center font-semibold text-gray-700 focus:ring-2 focus:ring-gray-500 outline-none" oninput="calculateAll()"></td>`;
+                        shopeeDropshipHTML += `<td rowspan="4" id="shopee-dropship-income-${day}" class="py-2 px-1 font-bold bg-blue-50/60 align-middle text-blue-900 text-xs">Rp 0</td>`;
+                    }
+                    shopeeDropshipHTML += `</tr>`;
 
                     // TikTok
                     tiktokHTML += `<tr class="${tiktokRowBg} border-b border-gray-200 text-center">`;
@@ -162,14 +208,18 @@
             });
 
             shopeeBody.innerHTML = shopeeHTML;
+            shopeeDropshipBody.innerHTML = shopeeDropshipHTML;
             tiktokBody.innerHTML = tiktokHTML;
             loadDataFromSheets();
         }
 
         function calculateAll() {
-            let sumShopeeTotal = 0, sumShopeeEarnings = 0, sumTiktokTotal = 0, sumTiktokEarnings = 0;
+            let sumShopeeTotal = 0, sumShopeeEarnings = 0;
+            let sumShopeeDropshipTotal = 0, sumShopeeDropshipEarnings = 0;
+            let sumTiktokTotal = 0, sumTiktokEarnings = 0;
 
             days.forEach(day => {
+                // Shopee
                 const sTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="Shopee"][data-day="${day}"]`);
                 const sTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="Shopee"][data-day="${day}"]`);
                 const sVal = parseInt(sTotalInput.value) || 0;
@@ -179,6 +229,17 @@
                 sumShopeeEarnings += sIncome;
                 document.getElementById(`shopee-income-${day}`).innerText = 'Rp ' + sIncome.toLocaleString('id-ID');
 
+                // Shopee Dropship
+                const sdTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="Shopee Dropship"][data-day="${day}"]`);
+                const sdTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="Shopee Dropship"][data-day="${day}"]`);
+                const sdVal = parseInt(sdTotalInput.value) || 0;
+                const sdTarif = parseFloat(sdTarifInput.value) || 0;
+                const sdIncome = sdVal * sdTarif;
+                sumShopeeDropshipTotal += sdVal;
+                sumShopeeDropshipEarnings += sdIncome;
+                document.getElementById(`shopee-dropship-income-${day}`).innerText = 'Rp ' + sdIncome.toLocaleString('id-ID');
+
+                // TikTok
                 const tTotalInput = document.querySelector(`input[data-type="totalpaket"][data-platform="TikTok"][data-day="${day}"]`);
                 const tTarifInput = document.querySelector(`input[data-type="tarif"][data-platform="TikTok"][data-day="${day}"]`);
                 const tVal = parseInt(tTotalInput.value) || 0;
@@ -191,13 +252,18 @@
 
             document.getElementById('shopeeFooterTotal').innerText = sumShopeeTotal;
             document.getElementById('shopeeFooterEarnings').innerText = 'Rp ' + sumShopeeEarnings.toLocaleString('id-ID');
+            
+            document.getElementById('shopeeDropshipFooterTotal').innerText = sumShopeeDropshipTotal;
+            document.getElementById('shopeeDropshipFooterEarnings').innerText = 'Rp ' + sumShopeeDropshipEarnings.toLocaleString('id-ID');
+
             document.getElementById('tiktokFooterTotal').innerText = sumTiktokTotal;
             document.getElementById('tiktokFooterEarnings').innerText = 'Rp ' + sumTiktokEarnings.toLocaleString('id-ID');
 
             document.getElementById('totalShopee').innerText = sumShopeeTotal;
+            document.getElementById('totalShopeeDropship').innerText = sumShopeeDropshipTotal;
             document.getElementById('totalTiktok').innerText = sumTiktokTotal;
-            document.getElementById('totalAll').innerText = sumShopeeTotal + sumTiktokTotal;
-            document.getElementById('totalEarnings').innerText = 'Rp ' + (sumShopeeEarnings + sumTiktokEarnings).toLocaleString('id-ID');
+            document.getElementById('totalAll').innerText = sumShopeeTotal + sumShopeeDropshipTotal + sumTiktokTotal;
+            document.getElementById('totalEarnings').innerText = 'Rp ' + (sumShopeeEarnings + sumShopeeDropshipEarnings + sumTiktokEarnings).toLocaleString('id-ID');
         }
 
         function loadDataFromSheets() {
@@ -252,6 +318,7 @@
 
             let rowsData = [];
             days.forEach(day => {
+                // Shopee
                 let sTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="Shopee"][data-day="${day}"]`).value || 0;
                 let sTarif = document.querySelector(`input[data-type="tarif"][data-platform="Shopee"][data-day="${day}"]`).value || 1300;
                 sizes.forEach(size => {
@@ -259,6 +326,15 @@
                     rowsData.push({ platform: "Shopee", hari: day, ukuran: size, jumlah: qty, totalPaket: sTotal, tarif: sTarif, totalPotongan: sTotal * sTarif });
                 });
 
+                // Shopee Dropship
+                let sdTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="Shopee Dropship"][data-day="${day}"]`).value || 0;
+                let sdTarif = document.querySelector(`input[data-type="tarif"][data-platform="Shopee Dropship"][data-day="${day}"]`).value || 600;
+                sizes.forEach(size => {
+                    let qty = document.querySelector(`input[data-type="jumlah"][data-platform="Shopee Dropship"][data-day="${day}"][data-size="${size}"]`).value || 0;
+                    rowsData.push({ platform: "Shopee Dropship", hari: day, ukuran: size, jumlah: qty, totalPaket: sdTotal, tarif: sdTarif, totalPotongan: sdTotal * sdTarif });
+                });
+
+                // TikTok
                 let tTotal = document.querySelector(`input[data-type="totalpaket"][data-platform="TikTok"][data-day="${day}"]`).value || 0;
                 let tTarif = document.querySelector(`input[data-type="tarif"][data-platform="TikTok"][data-day="${day}"]`).value || 1300;
                 sizes.forEach(size => {
@@ -292,8 +368,12 @@
 
             if (confirm("Reset total semua data di Google Sheets?")) {
                 document.querySelectorAll('input[type="number"]').forEach(input => {
-                    if (input.dataset.type !== 'tarif') input.value = '';
-                    else input.value = '1300';
+                    if (input.dataset.type !== 'tarif') {
+                        input.value = '';
+                    } else {
+                        if (input.dataset.platform === 'Shopee Dropship') input.value = '600';
+                        else input.value = '1300';
+                    }
                 });
                 calculateAll();
 
